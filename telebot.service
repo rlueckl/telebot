@@ -1,0 +1,11 @@
+[Unit]
+Description=SystemD unit file for the Telegram bot.
+
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/opt/telebot/telebot.py
+
+[Install]
+WantedBy=multi-user.target
