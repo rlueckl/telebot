@@ -23,6 +23,9 @@ Usage
 
 The bot currently understands the following:
 
-RegEx: `[cC]oins?(\?)*` - get the Bitcoin and Dogecoin prices in EUR and USD. For example: **coin** or **Coins?**
-Sentence: "$CRYPTO in $CURRENCY" - get the specified crypto prices in the specified currency. For example: **monero in huf** or **Bitcoin in USD**
+_RegEx:_ `[cC]oins?(\?)*` - to get the Bitcoin and Dogecoin prices in EUR and USD.
+For example: **coin** or **Coins?**
+
+_Sentence:_ `$CRYPTO in $CURRENCY` - to get the specified crypto prices in the specified currency.
+For example: **monero in huf** or **Bitcoin in USD**
 
