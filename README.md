@@ -1,13 +1,16 @@
 Telegram bot
 ============
 
+Based on [echobot.py](https://github.com/python-telegram-bot/python-telegram-bot/blob/master/examples/echobot.py) from [python-telegram-bot](https://github.com/python-telegram-bot/python-telegram-bot)
+
 Install
 -------
 
+ * `pip install python-telegram-bot --upgrade`
  * `mkdir /opt/telebot/`
  * `cp telebot.py /opt/telebot/`
  * `vim /opt/telebot/config.yaml`
-   ```
+   ```yaml
    ---
    token: "my_bot_token"
    ```
@@ -20,6 +23,6 @@ Usage
 
 The bot currently understands the following:
 
-RegEx: "" - get the Bitcoin and Dogecoin prices in EUR and USD. For example: **coin** or **Coins?**
-Sentence: "$crypto in $currency" - get the specified crypto prices in the specified currency. For example: **monero in huf**
+RegEx: `[cC]oins?(\?)*` - get the Bitcoin and Dogecoin prices in EUR and USD. For example: **coin** or **Coins?**
+Sentence: "$CRYPTO in $CURRENCY" - get the specified crypto prices in the specified currency. For example: **monero in huf** or **Bitcoin in USD**
 
