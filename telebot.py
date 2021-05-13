@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # pylint: disable=C0116
 # This program is dedicated to the public domain under the CC0 license.
 
