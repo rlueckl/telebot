@@ -29,3 +29,6 @@ For example: **coin** or **Coins?**
 _Sentence:_ `$CRYPTO in $CURRENCY` - to get the specified crypto prices in the specified currency.
 For example: **monero in huf** or **Bitcoin in USD**
 
+_RegEx:_ `^[a-zA-Z]{4}\-?[0-9]{5}$` - search for a game on SerialStation and return the name and links to it's SerialStation page and YouTube search.
+For example: **bljm60316** or **SLPM-62702**
+
