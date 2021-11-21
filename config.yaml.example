@@ -1,2 +1,6 @@
 ---
 token: "my_bot_token"
+
+coins:
+  btc: 789.0
+  doge: 123.456
