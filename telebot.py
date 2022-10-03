@@ -24,9 +24,10 @@ from telegram.utils.helpers import escape_markdown
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
 
 # Used in get_serialstation()
-from bs4 import BeautifulSoup
 from html import escape as escape_html
 
+# To pass arguments to MessageHandlers
+from functools import partial
 
 # Enable logging
 logging.basicConfig(
@@ -38,7 +39,7 @@ logger = logging.getLogger(__name__)
 
 # Define a few command handlers. These usually take the two arguments update and
 # context.
-def start(update: Update, _: CallbackContext) -> None:
+def start(update: Update, context: CallbackContext) -> None:
     """Send a message when the command /start is issued."""
     user = update.effective_user
     update.message.reply_markdown_v2(
@@ -47,21 +48,18 @@ def start(update: Update, _: CallbackContext) -> None:
     )
 
 
-def help_command(update: Update, _: CallbackContext) -> None:
+def help_command(update: Update, context: CallbackContext) -> None:
     """Send a message when the command /help is issued."""
     update.message.reply_text('Help!')
 
 
-#def echo(update: Update, _: CallbackContext) -> None:
+#def echo(update: Update, context: CallbackContext) -> None:
 #    """Echo the user message."""
 #    update.message.reply_text(update.message.text)
 
 
-def get_coins(update: Update, _: CallbackContext) -> None:
+def get_coins(update: Update, context: CallbackContext, coins) -> None:
     """Get BTC and DOGE prices"""
-    with open(r'/opt/telebot/config.yaml') as conf_file:
-        data = yaml.safe_load(conf_file)
-
     resp = requests.get('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Cdogecoin&vs_currencies=usd%2Ceur', headers={"Accept": "application/json"})
     values = resp.json()
 
@@ -72,14 +70,14 @@ def get_coins(update: Update, _: CallbackContext) -> None:
         for currency in ['eur', 'usd']:
             message += escape_markdown("  {0} = {1}\n".format(currency.upper(), values[key][currency]), version=2)
 
-    message += escape_markdown('\n{0:.3f} BTC are {1:.3f} €'.format(data['coins']['btc'], values['bitcoin']['eur']*data['coins']['btc']), version=2)
-    message += escape_markdown('\n{0:.3f} DOGE are {1:.3f} €'.format(data['coins']['doge'], values['dogecoin']['eur']*data['coins']['doge']), version=2)
+    message += escape_markdown('\n{0:.3f} BTC are {1:.3f} €'.format(coins['btc'], values['bitcoin']['eur']*coins['btc']), version=2)
+    message += escape_markdown('\n{0:.3f} DOGE are {1:.3f} €'.format(coins['doge'], values['dogecoin']['eur']*coins['doge']), version=2)
 
     #print(message)
     update.message.reply_markdown_v2(message, quote=False)
 
 
-def get_spec_coin(update: Update, _: CallbackContext) -> None:
+def get_spec_coin(update: Update, context: CallbackContext) -> None:
     """Get the price of a specified coin in the specified currency"""
     coin = update.message.text.split()[0].lower()
     currency = update.message.text.split()[-1].lower()
@@ -93,28 +91,30 @@ def get_spec_coin(update: Update, _: CallbackContext) -> None:
     update.message.reply_markdown_v2(message, quote=False)
 
 
-def get_serialstation(update: Update, _: CallbackContext) -> None:
+def get_serialstation(update: Update, context: CallbackContext, api_url) -> None:
     """Generate a link to SerialStation and YouTube for given game"""
 
     text_part = update.message.text[0:4].upper()
     num_part = update.message.text[-5:]
 
-    serial_station_url = 'https://serialstation.com/titles/{0}/{1}'.format(text_part, num_part)
+    serial_station_api = '{0}titles/?title_id_type={1}&title_id_number={2}'.format(api_url, text_part, num_part)
 
-    resp = requests.get(serial_station_url)
+    resp = requests.get(serial_station_api)
 
     if resp.status_code != 200:
         message = escape_markdown('SerialStation error, response code: {0}'.format(resp.status_code))
     else:
-        html_soup = BeautifulSoup(resp.content, 'html.parser')
-
-        for header in html_soup.find_all('h1'):
-            title = header.contents[0].strip()
-            break
-
-        escaped_title = escape_html(title).replace(' ', '+')
-
-        message = escape_markdown('{0}-{1}\n{2}\n\nhttps://serialstation.com/titles/{0}/{1}\n\nhttps://www.youtube.com/results?search_query={3}'.format(text_part, num_part, title, escaped_title), version=2)
+        data = resp.json()
+        if data['count'] == 1:
+            title = data['results'][0]['name']['default_value']
+            escaped_title = escape_html(title).replace(' ', '+')
+            message = escape_markdown('{0}-{1}\n{2}\n\nhttps://serialstation.com/titles/{0}/{1}\n\nhttps://www.youtube.com/results?search_query={3}'.format(text_part, num_part, title, escaped_title), version=2)
+        elif data['count'] == 0:
+            message = escape_markdown('Error: no game found')
+        elif data['count'] > 0:
+            message = escape_markdown('Error: got more than 1 result')
+        else:
+            message = escape_markdown('Unkown error, please check journal')
 
     update.message.reply_markdown_v2(message, quote=False)
 
@@ -127,7 +127,7 @@ def main() -> None:
         data = yaml.safe_load(config_file)
 
     # Create the Updater and pass it your bot's token.
-    updater = Updater(data["token"])
+    updater = Updater(data["telegram_token"], use_context=True)
 
     # Get the dispatcher to register handlers
     dispatcher = updater.dispatcher
@@ -138,9 +138,9 @@ def main() -> None:
 
     # on non command i.e message - echo the message on Telegram
     #dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, echo))
-    dispatcher.add_handler(MessageHandler(Filters.regex(r'^[cC]oins?(\?)*$'), get_coins))
+    dispatcher.add_handler(MessageHandler(Filters.regex(r'^[cC]oins?(\?)*$'), partial(get_coins, coins=data["coins"])))
     dispatcher.add_handler(MessageHandler(Filters.regex(r'^[a-zA-Z]+ in [a-zA-Z]+$'), get_spec_coin))
-    dispatcher.add_handler(MessageHandler(Filters.regex(r'^[a-zA-Z]{4}\-?[0-9]{5}$'), get_serialstation))
+    dispatcher.add_handler(MessageHandler(Filters.regex(r'^[a-zA-Z]{4}\-?[0-9]{5}$'), partial(get_serialstation, api_url=data["serialstation_api"])))
 
     # Start the Bot
     updater.start_polling()

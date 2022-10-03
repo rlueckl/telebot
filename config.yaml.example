@@ -1,6 +1,7 @@
 ---
-token: "my_bot_token"
+telegram_token: "YOUR_TELEGRAM_TOKEN_HERE"
+serialstation_api: "SERIALSTATION_API_URL_HERE"
 
 coins:
-  btc: 789.0
-  doge: 123.456
+  btc: 12345.6789
+  doge: 67890.1234
